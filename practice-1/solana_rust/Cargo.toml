@@ -1,0 +1,11 @@
+[package]
+name = "solana_rust"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+solana-client = "2"
+solana-sdk = "2"
+solana-program = "2"
