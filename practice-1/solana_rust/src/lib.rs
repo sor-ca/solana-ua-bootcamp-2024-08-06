@@ -1,13 +1,18 @@
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::message::Message;
-use solana_sdk::pubkey::Pubkey;
+//use solana_sdk::pubkey::Pubkey;
+use solana_program::pubkey::Pubkey;
 use solana_sdk::signer::{keypair::Keypair, EncodableKey, EncodableKeypair};
 use solana_sdk::system_instruction;
 use solana_sdk::transaction::Transaction;
 use solana_sdk::{signature::Signature, system_transaction};
+
+use dotenv::dotenv;
 use std::error::Error;
 
 pub const LAMPORTS_PER_SOL: f64 = 1000000000.0;
+
+pub const DEVNET_URL: &str = "https://api.devnet.solana.com";
 
 pub fn generate_keypair() -> Keypair {
     Keypair::new()
@@ -34,6 +39,31 @@ pub fn load_from_env_file() -> Result<Keypair, Box<dyn Error>> {
     Keypair::read_from_file(".env")
 }
 
+pub fn my_keypair() -> Result<Keypair, Box<dyn Error>> {
+    let private_key = std::env::var("SECRET_KEY")?;
+    let as_array: Vec<u8> = serde_json::from_str(&private_key)?;
+    let keypair = Keypair::from_bytes(&as_array)?;
+    Ok(keypair)
+}
+
+pub fn receiver_pubkey() -> Result<Pubkey, Box<dyn Error>> {
+    let receiver_pubkey = Pubkey::from_str(&std::env::var("RECEIVER")?)?;
+    Ok(receiver_pubkey)
+}
+
+pub fn token_mint() -> Result<Pubkey, Box<dyn Error>> {
+    let token_mint = Pubkey::from_str(&std::env::var("TOKEN_MINT")?)?;
+    Ok(token_mint)
+}
+
+#[test]
+fn test_my_keypair() {
+    // Load environment variables from .env file
+    dotenv().ok();
+    let keypair = my_keypair().unwrap();
+    dbg!(keypair.encodable_pubkey());
+}
+
 pub fn check_balance(rpc_client: &RpcClient, public_key: &Pubkey) -> Result<f64, Box<dyn Error>> {
     Ok(rpc_client.get_balance(&public_key)? as f64 / LAMPORTS_PER_SOL)
 }
@@ -51,6 +81,28 @@ pub fn request_airdrop(
         }
     }
     Ok(sig)
+}
+
+#[test]
+fn test_request_airdrop() {
+    dotenv().ok();
+    let me = my_keypair().unwrap();
+    let my_pubkey = me.pubkey();
+
+    let rpc_client = RpcClient::new(DEVNET_URL);
+
+    let initial_balance = check_balance(&rpc_client, &my_pubkey).unwrap();
+    dbg!(&initial_balance);
+
+    if let Ok(_) = request_airdrop(&rpc_client, &my_pubkey, 1.0) {
+        println!("Airdrop finished");
+    } else {
+        println!("Airdrop failed");
+    }
+
+    let final_balance = check_balance(&rpc_client, &my_pubkey).unwrap();
+    dbg!(&final_balance);
+    assert!(initial_balance < final_balance);
 }
 
 pub fn transfer_funds(
@@ -128,37 +180,19 @@ fn test_generate_personal_keypair() {
 }
 
 #[test]
-#[ignore]
-fn write_personal_key_into_env() {
-    let keypair = generate_personal_keypair("MG").unwrap();
-    write_to_env_file(&keypair).unwrap();
-}
-
-#[test]
-fn test_load_from_file() {
-    let keypair = generate_keypair();
-    write_to_env_file(&keypair).unwrap();
-    let keypair_from_file = load_from_env_file().unwrap();
-    assert_eq!(
-        keypair.encodable_pubkey(),
-        keypair_from_file.encodable_pubkey()
-    );
-}
-
-#[test]
 fn test_transfer_funds_with_memo() {
-    let sender_keypair = load_from_env_file().unwrap();
+    dotenv().ok();
+    let sender_keypair = my_keypair().unwrap();
     let memo = "I have transfered SOL with rust";
-    let rpc_client = RpcClient::new("https://api.devnet.solana.com");
-    let receiver_pub_key =
-        Pubkey::from_str("Eej3zf2RjHdVM4cCAwYAXwtPjWF1osekus5W3hzaqY9K").unwrap();
+    let rpc_client = RpcClient::new(DEVNET_URL);
+    let receiver_pubkey = receiver_pubkey().unwrap();
     let amount_sol = 0.01;
 
     let sig = transfer_funds_with_memo(
         memo,
         &rpc_client,
         &sender_keypair,
-        &receiver_pub_key,
+        &receiver_pubkey,
         amount_sol,
     )
     .unwrap();
@@ -214,9 +248,10 @@ pub fn create_token(
 
 #[test]
 fn test_create_token() {
-    let payer = load_from_env_file().unwrap();
+    dotenv().ok();
+    let payer = my_keypair().unwrap();
     let mint_authority = payer.pubkey();
-    let rpc_client = RpcClient::new("https://api.devnet.solana.com");
+    let rpc_client = RpcClient::new(DEVNET_URL);
     let token_key = create_token(&rpc_client, &payer, &mint_authority, None, 2).unwrap();
     dbg!(token_key);
 }
@@ -249,10 +284,11 @@ pub fn create_receiver_associated_token_account(
 
 #[test]
 fn test_create_receiver_associated_token_account() {
-    let mint = Pubkey::from_str("DzS38m6BL4nLnVroGJeHfnjLH5aAXPiRCpvP7ztLuNn8").unwrap();
-    let payer = load_from_env_file().unwrap();
-    let rpc_client = RpcClient::new("https://api.devnet.solana.com");
-    let owner = Pubkey::from_str("Eej3zf2RjHdVM4cCAwYAXwtPjWF1osekus5W3hzaqY9K").unwrap();
+    dotenv().ok();
+    let mint = token_mint().unwrap();
+    let payer = my_keypair().unwrap();
+    let rpc_client = RpcClient::new(DEVNET_URL);
+    let owner = receiver_pubkey().unwrap();
     let associated_token_address =
         create_receiver_associated_token_account(&rpc_client, &payer, &owner, &mint).unwrap();
     dbg!(associated_token_address);
@@ -291,11 +327,91 @@ pub fn mint_tokens(
 
 #[test]
 fn test_mint_tokens() {
-    let mint = Pubkey::from_str("DzS38m6BL4nLnVroGJeHfnjLH5aAXPiRCpvP7ztLuNn8").unwrap();
-    let payer = load_from_env_file().unwrap();
-    let rpc_client = RpcClient::new("https://api.devnet.solana.com");
+    dotenv().ok();
+    let mint = token_mint().unwrap();
+    let payer = my_keypair().unwrap();
+    let rpc_client = RpcClient::new(DEVNET_URL);
     let destination = Pubkey::from_str("CgdCJ6HEvDHRTKZtTm7oy8jdQqVMBWFPYBgb5beKR1ot").unwrap();
-    let sig =
-        mint_tokens(&rpc_client, &payer, &mint, &destination, &payer, 10).unwrap();
+    let sig = mint_tokens(&rpc_client, &payer, &mint, &destination, &payer, 10).unwrap();
+    dbg!(sig);
+}
+
+use mpl_token_metadata::ID;
+
+pub fn create_metadata(
+    rpc_client: &RpcClient,
+    payer: &Keypair,
+    mint: &Pubkey,
+    mint_authority: &Keypair,
+    update_authority: &Pubkey,
+    name: String,
+    symbol: String,
+    uri: String,
+) -> Result<Signature, Box<dyn std::error::Error>> {
+    let metadata_seeds = &[b"metadata", ID.as_ref(), mint.as_ref()];
+    let token_metadata_program_id = solana_program::pubkey::Pubkey::from(ID.to_bytes());
+    let (metadata_pubkey, _) =
+        Pubkey::find_program_address(metadata_seeds, &token_metadata_program_id);
+
+    let data = mpl_token_metadata::types::DataV2 {
+        name,
+        symbol,
+        uri,
+        seller_fee_basis_points: 0, // Change this if you want to set a fee
+        creators: None,             // Optionally add creators
+        collection: None,           // Optionally add a collection
+        uses: None,                 // Optionally add uses
+    };
+
+    let metadata_instruction =
+        mpl_token_metadata::instructions::CreateMetadataAccountV3Builder::new()
+            .metadata(metadata_pubkey)
+            .mint(*mint)
+            .mint_authority(mint_authority.pubkey())
+            .payer(payer.pubkey())
+            .update_authority(*update_authority, true)
+            .data(data)
+            .is_mutable(true)
+            .instruction();
+
+    let transaction = Transaction::new_signed_with_payer(
+        &[metadata_instruction],
+        Some(&payer.pubkey()),
+        &[payer, mint_authority],
+        rpc_client.get_latest_blockhash()?,
+    );
+
+    let sig = rpc_client.send_and_confirm_transaction(&transaction)?;
+
+    Ok(sig)
+}
+
+#[test]
+fn test_create_metadata() {
+    dotenv().ok();
+    //let mint = token_mint().unwrap();
+    let mint = Pubkey::from_str("69YQqyZ615x54jEyaBdcPh9SUz7PopFi9maUDv3zGjZC").unwrap();
+    let payer = my_keypair().unwrap();
+    let rpc_client = RpcClient::new(DEVNET_URL);
+
+    // let name = "My Token".to_string();
+    // let symbol = "MTK".to_string();
+    // let uri = "https://example.com/mytoken.json".to_string();
+
+    let name = "MGToken".to_string();
+    let symbol = "MGT".to_string();
+    let uri = "https://example.com/token.json".to_string();
+
+    let sig = create_metadata(
+        &rpc_client,
+        &payer,
+        &mint,
+        &payer,
+        &payer.pubkey(),
+        name,
+        symbol,
+        uri,
+    )
+    .unwrap();
     dbg!(sig);
 }

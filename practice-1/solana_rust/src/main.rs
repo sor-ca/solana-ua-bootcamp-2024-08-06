@@ -1,13 +1,12 @@
 use solana_client::rpc_client::RpcClient;
 use solana_rust::{
     check_balance, generate_keypair, load_from_env_file, request_airdrop, transfer_funds,
+    DEVNET_URL,
 };
 use solana_sdk::signer::Signer;
 
-const URL: &str = "https://api.devnet.solana.com";
-
 fn main() {
-    let rpc_client = RpcClient::new(URL);
+    let rpc_client = RpcClient::new(DEVNET_URL);
 
     let me = load_from_env_file().unwrap();
     let my_pubkey = me.pubkey();
