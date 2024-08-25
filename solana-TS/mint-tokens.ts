@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Connection, Keypair, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { Connection, clusterApiUrl } from "@solana/web3.js";
 import { mintTo, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
 import { getExplorerLink } from "@solana-developers/helpers";
 import { env_keypair, env_recipient, env_token_mint } from "./load-keypair";
@@ -12,11 +12,6 @@ const connection = new Connection(clusterApiUrl("devnet"));
 const MINOR_UNITS_PER_MAJOR_UNITS = Math.pow(10, 2);
 
 const tokenMintAccount = env_token_mint();
-
-// const recipientAssociatedTokenAccount = new PublicKey(
-//   //"Address that create-token-account.ts created"
-//   "6rf4cqEXZtVuzvJEZsN2a1G1HM9Q2tSkR7jgeNn5ULc5"
-// );
 
 let recipient = env_recipient();
 let recipientTokenAccount = await getOrCreateAssociatedTokenAccount(

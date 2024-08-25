@@ -3,7 +3,6 @@ import { getExplorerLink } from "@solana-developers/helpers";
 import {
   Connection,
   Keypair,
-  PublicKey,
   clusterApiUrl,
 } from "@solana/web3.js";
 import { createMint, getOrCreateAssociatedTokenAccount, createMultisig, mintTo, getMint } from "@solana/spl-token";
