@@ -16,10 +16,9 @@ import {
 import { env_keypair, env_token_mint, receiver_keypair } from './load-keypair';
 import { check_balance } from './check-balance';
 
-async function getTokenBalance(connection: Connection, tokenAccount: PublicKey): Promise<number> {
+export async function getTokenBalance(connection: Connection, tokenAccount: PublicKey): Promise<number> {
     const info = await connection.getTokenAccountBalance(tokenAccount);
     if (info.value.uiAmount == null) throw new Error('No balance found');
-    console.log('Balance (using Solana-Web3.js): ', info.value.uiAmount);
     return info.value.uiAmount;
 }
 
@@ -74,7 +73,7 @@ async function createPartialSignedTransaction(
 }
 
 // Step 2: Receiver finalizes the transaction, signs it, and sends it
-async function finalizeAndSendTransaction(
+export async function finalizeAndSendTransaction(
     connection: Connection,
     receiver: Keypair,
     serializedMessage: Uint8Array
@@ -157,3 +156,5 @@ async function finalizeAndSendTransaction(
     // receiverTokenBalance = await getTokenBalance(connection, receiverTokenAccount.address);
     // console.log(`Receiver final SOL balance ${receiverSOLbalance}, token balance ${receiverTokenBalance}`);
 })();
+
+//solana balance 

@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { getExplorerLink } from "@solana-developers/helpers";
 import {
   Connection,
   Keypair,
@@ -7,15 +6,15 @@ import {
 } from "@solana/web3.js";
 import { createMint, getOrCreateAssociatedTokenAccount, createMultisig, mintTo, getMint } from "@solana/spl-token";
 
-import { env_keypair, env_recipient, env_token_mint } from "./load-keypair";
+import { env_keypair, from_env, env_recipient } from "./load-keypair";
 
 const payer = env_keypair();
 
 const connection = new Connection(clusterApiUrl("devnet"));
 
-const signer1 = Keypair.generate();
-const signer2 = Keypair.generate();
-const signer3 = Keypair.generate();
+const signer1 = payer;
+const signer2 = from_env("SECRET_KEY1");
+const signer3 = from_env("SECRET_KEY2");
 
 console.log(signer1.publicKey.toBase58());
 console.log(signer2.publicKey.toBase58());
@@ -44,29 +43,29 @@ const mint = await createMint(
 
 console.log(`Created mint for multisig ${mint.toBase58()}`);
 
-const associatedTokenAccount = await getOrCreateAssociatedTokenAccount(
-  connection,
-  payer,
-  mint,
-  signer1.publicKey
-);
+// const associatedTokenAccount = await getOrCreateAssociatedTokenAccount(
+//   connection,
+//   payer,
+//   mint,
+//   env_recipient()
+// );
 
-await mintTo(
-  connection,
-  payer,
-  mint,
-  associatedTokenAccount.address,
-  multisigKey,
-  1,
-  [
-    signer1,
-    signer2
-  ]
-)
+// await mintTo(
+//   connection,
+//   payer,
+//   mint,
+//   associatedTokenAccount.address,
+//   multisigKey,
+//   1,
+//   [
+//     signer1,
+//     signer2
+//   ]
+// )
 
-const mintInfo = await getMint(
-  connection,
-  mint
-)
+// const mintInfo = await getMint(
+//   connection,
+//   mint
+// )
 
-console.log(`Minted ${mintInfo.supply} token`);
+// console.log(`Minted ${mintInfo.supply} token`);
