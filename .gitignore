@@ -1,2 +1,5 @@
-/practice-1/solana_rust/target
+/solana_rust/target
+/solana_rust/Cargo.lock
 /solana-TS/node_modules
+/favorites/target
+/favorites/Cargo.lock
