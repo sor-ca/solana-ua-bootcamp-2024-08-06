@@ -3,3 +3,7 @@
 /solana-TS/node_modules
 /favorites/target
 /favorites/Cargo.lock
+/favorites/node_modules
+/practice-1/favorites/target
+/practice-1/favorites/Cargo.lock
+/practice-1/faverites/node_modules
