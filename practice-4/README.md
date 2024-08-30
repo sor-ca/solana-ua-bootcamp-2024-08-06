@@ -6,3 +6,4 @@ Classroom.
 
 Не забудьте зберігти свою роботу (`git add`/`git commit`) та викласти її на
 GitHub (`git push`).
+first variant of task 3.1 with mocha
