@@ -1,8 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{self, Mint, TokenAccount, Transfer},
-    token_interface::TokenInterface,
+// use anchor_spl::{
+//     associated_token::AssociatedToken,
+//     token::{self, Mint, TokenAccount, Transfer},
+//     token_interface::TokenInterface,
+// };
+
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
 use super::EscrowAccount;
@@ -14,10 +19,16 @@ pub struct TakeOffer<'info> {
     #[account(mut)]
     pub maker: SystemAccount<'info>,
 
-    #[account(mut)]
-    pub taker_btk_account: Account<'info, TokenAccount>,
+    // pub atk_mint: Account<'info, Mint>,
+    // pub btk_mint: Account<'info, Mint>,
+    pub atk_mint: InterfaceAccount<'info, Mint>,
+    pub btk_mint: InterfaceAccount<'info, Mint>,
 
-    pub atk_mint: Account<'info, Mint>,
+    #[account(mut)]
+    pub taker_btk_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub maker_atk_account: InterfaceAccount<'info, TokenAccount>,
+
     #[account(
         init_if_needed,
         payer = taker,
@@ -25,8 +36,7 @@ pub struct TakeOffer<'info> {
         associated_token::authority = taker,
         associated_token::token_program = token_program,
     )]
-    pub taker_atk_account: Account<'info, TokenAccount>,
-    pub btk_mint: Account<'info, Mint>,
+    pub taker_atk_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
         init_if_needed,
         payer = taker,
@@ -34,9 +44,8 @@ pub struct TakeOffer<'info> {
         associated_token::authority = maker,
         associated_token::token_program = token_program,
     )]
-    pub maker_btk_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub maker_atk_account: Account<'info, TokenAccount>,
+    pub maker_btk_account: InterfaceAccount<'info, TokenAccount>,
+
     #[account(mut)]
     pub escrow_account: Account<'info, EscrowAccount>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -46,27 +55,40 @@ pub struct TakeOffer<'info> {
 
 pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
     // Transfer BTK tokens from the taker to the maker
-    let cpi_accounts = Transfer {
+    let cpi_accounts = TransferChecked {
         from: ctx.accounts.taker_btk_account.to_account_info(),
         to: ctx.accounts.maker_btk_account.to_account_info(),
         authority: ctx.accounts.taker.to_account_info(),
+        mint: ctx.accounts.btk_mint.to_account_info(),
     };
     let cpi_program = ctx.accounts.token_program.to_account_info();
     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-    token::transfer(cpi_ctx, ctx.accounts.escrow_account.taker_btk_amount)?;
+    if let Err(e) = transfer_checked(
+        cpi_ctx,
+        ctx.accounts.escrow_account.taker_btk_amount,
+        ctx.accounts.btk_mint.decimals,
+    ) {
+        msg!("Error transferring BTK tokens: {:?}", e);
+        return Err(e);
+    }
 
     // Transfer ATK tokens from the maker to the taker
-    let cpi_accounts = Transfer {
+    let cpi_accounts = TransferChecked {
         from: ctx.accounts.maker_atk_account.to_account_info(),
         to: ctx.accounts.taker_atk_account.to_account_info(),
         authority: ctx.accounts.escrow_account.to_account_info(),
+        mint: ctx.accounts.atk_mint.to_account_info(),
     };
     let cpi_program = ctx.accounts.token_program.to_account_info();
     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
     //token::transfer(cpi_ctx, ctx.accounts.escrow_account.maker_atk_amount)?;
 
-    if let Err(e) = token::transfer(cpi_ctx, ctx.accounts.escrow_account.maker_atk_amount) {
-        msg!("Error transferring BTK tokens: {:?}", e);
+    if let Err(e) = transfer_checked(
+        cpi_ctx,
+        ctx.accounts.escrow_account.maker_atk_amount,
+        ctx.accounts.atk_mint.decimals,
+    ) {
+        msg!("Error transferring ATK tokens: {:?}", e);
         return Err(e);
     }
 

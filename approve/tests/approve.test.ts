@@ -41,6 +41,15 @@ describe("token-exchange", () => {
   const amountATK = 20;
   const amountBTK = 100;
 
+  function sleep(millis: number) {
+    var t = (new Date()).getTime();
+    var i = 0;
+    while (((new Date()).getTime() - t) < millis) {
+        i++;
+    }
+}
+
+
   beforeAll(async () => {
     // Airdrop SOL to Alice and Bob
     await provider.connection.requestAirdrop(alice.publicKey, 2 * anchor.web3.LAMPORTS_PER_SOL);
@@ -48,6 +57,8 @@ describe("token-exchange", () => {
 
     const AliceInitBalance = await provider.connection.getBalance(alice.publicKey);
     const BobInitBalance = await provider.connection.getBalance(bob.publicKey);
+
+    sleep(1000)
 
     console.log("Alice's initial balance:", AliceInitBalance);
     console.log("Bob's initial balance:", BobInitBalance);
@@ -74,16 +85,19 @@ describe("token-exchange", () => {
 
     console.log("Alice's initial ATK balance:", aliceInitialATK.value.uiAmount);
     console.log("Bob's initial BTK balance:", bobInitialBTK.value.uiAmount);
+
+    sleep(1000)
   });
 
   it("Alice makes an offer to exchange ATK for BTK", async () => {
     try {
       await program.methods
-      .makeOffer(new anchor.BN(amountATK), new anchor.BN(amountBTK), mintBTK)
+      .makeOffer(new anchor.BN(amountATK), new anchor.BN(amountBTK))
       .accounts({
         maker: alice.publicKey,
+        atkMint: mintATK,
+        btkMint: mintBTK,
         makerAtkAccount: aliceTokenAccountATK,
-        makerAtkMint: mintATK,
         escrowAccount: escrowAccount.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -107,9 +121,10 @@ describe("token-exchange", () => {
         .takeOffer()
         .accounts({
           taker: bob.publicKey,
-          takerBtkAccount: bobTokenAccountBTK,
-          takerBtkMint: mintBTK,
           maker: alice.publicKey,
+          atkMint: mintATK,
+          btkMint: mintBTK,
+          takerBtkAccount: bobTokenAccountBTK,
           makerAtkAccount: aliceTokenAccountATK,
           escrowAccount: escrowAccount.publicKey,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -132,7 +147,7 @@ describe("token-exchange", () => {
       expect(bobAtkAccount.value.uiAmount).toBe(20); // Bob should receive 20 ATK
       expect(aliceAtkAccount.value.uiAmount).toBe(0); // Alice's ATK should be transferred
       expect(bobBtkAccount.value.uiAmount).toBe(0); // Bob's BTK should be transferred
-      
+
     } catch (error) {
       console.error("Error during take_offer:", error);
       throw error;
