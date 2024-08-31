@@ -20,3 +20,11 @@
 /practice-4/favorites/test-ledger
 /practice-4/favorites/Cargo.lock
 /practice-4/favorites/.yarn 
+/approve/.anchor 
+/approve/.DS_Store
+/approve/target 
+/approve/**/*.rs.bk
+/approve/node_modules 
+/approve/test-ledger
+/approve/Cargo.lock
+/approve/.yarn 
