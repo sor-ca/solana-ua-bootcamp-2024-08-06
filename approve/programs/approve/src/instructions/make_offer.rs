@@ -60,13 +60,6 @@ pub fn make_offer(
     taker_btk_amount: u64,
 ) -> Result<()> {
     msg!("Starting to make offer...");
-    // Store offer details in escrow account
-    // let escrow_account = &mut ctx.accounts.escrow_account;
-    // escrow_account.maker = *ctx.accounts.maker.key;
-    // escrow_account.maker_atk_amount = maker_atk_amount;
-    // escrow_account.atk_mint = ctx.accounts.atk_mint.key();
-    // escrow_account.taker_btk_amount = taker_btk_amount;
-    // escrow_account.btk_mint = btk_mint;
     ctx.accounts.escrow_account.set_inner(EscrowAccount {
         maker: ctx.accounts.maker.key(),
         atk_mint: ctx.accounts.atk_mint.key(),

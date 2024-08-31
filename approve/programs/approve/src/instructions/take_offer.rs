@@ -19,16 +19,23 @@ pub struct TakeOffer<'info> {
     #[account(mut)]
     pub maker: SystemAccount<'info>,
 
-    // pub atk_mint: Account<'info, Mint>,
-    // pub btk_mint: Account<'info, Mint>,
-    pub atk_mint: InterfaceAccount<'info, Mint>,
-    pub btk_mint: InterfaceAccount<'info, Mint>,
+    pub atk_mint: Box<InterfaceAccount<'info, Mint>>,
+    pub btk_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    #[account(mut)]
-    pub taker_btk_account: InterfaceAccount<'info, TokenAccount>,
-    #[account(mut)]
-    pub maker_atk_account: InterfaceAccount<'info, TokenAccount>,
-
+    #[account(
+        mut,
+        associated_token::mint = btk_mint,
+        associated_token::authority = taker,
+        associated_token::token_program = token_program,
+    )]
+    pub taker_btk_account: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(
+        mut,
+        associated_token::mint = atk_mint,
+        associated_token::authority = maker,
+        associated_token::token_program = token_program,
+    )]
+    pub maker_atk_account: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         init_if_needed,
         payer = taker,
@@ -36,7 +43,7 @@ pub struct TakeOffer<'info> {
         associated_token::authority = taker,
         associated_token::token_program = token_program,
     )]
-    pub taker_atk_account: InterfaceAccount<'info, TokenAccount>,
+    pub taker_atk_account: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         init_if_needed,
         payer = taker,
@@ -44,7 +51,7 @@ pub struct TakeOffer<'info> {
         associated_token::authority = maker,
         associated_token::token_program = token_program,
     )]
-    pub maker_btk_account: InterfaceAccount<'info, TokenAccount>,
+    pub maker_btk_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut)]
     pub escrow_account: Account<'info, EscrowAccount>,

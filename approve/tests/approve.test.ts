@@ -15,17 +15,20 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, Keypair, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   createMint,
   getOrCreateAssociatedTokenAccount,
   mintTo,
   getAccount
 } from "@solana/spl-token";
+import { Approve } from "../target/types/approve";
+import { Program } from "@coral-xyz/anchor";
 
 describe("token-exchange", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.Approve;
+  const program = anchor.workspace.Approve as Program<Approve>;;
 
   let mintATK: PublicKey;
   let mintBTK: PublicKey;
@@ -97,11 +100,8 @@ describe("token-exchange", () => {
         maker: alice.publicKey,
         atkMint: mintATK,
         btkMint: mintBTK,
-        makerAtkAccount: aliceTokenAccountATK,
         escrowAccount: escrowAccount.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       })
       .signers([alice, escrowAccount])
       .rpc();
@@ -124,10 +124,11 @@ describe("token-exchange", () => {
           maker: alice.publicKey,
           atkMint: mintATK,
           btkMint: mintBTK,
-          takerBtkAccount: bobTokenAccountBTK,
-          makerAtkAccount: aliceTokenAccountATK,
+          //takerBtkAccount: bobTokenAccountBTK,
+          //makerAtkAccount: aliceTokenAccountATK,
           escrowAccount: escrowAccount.publicKey,
           tokenProgram: TOKEN_PROGRAM_ID,
+          //systemProgram: SystemProgram.programId,
         })
         .signers([bob])
         .rpc();
