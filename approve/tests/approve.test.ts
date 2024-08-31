@@ -77,7 +77,8 @@ describe("token-exchange", () => {
   });
 
   it("Alice makes an offer to exchange ATK for BTK", async () => {
-    await program.methods
+    try {
+      await program.methods
       .makeOffer(new anchor.BN(amountATK), new anchor.BN(amountBTK), mintBTK)
       .accounts({
         maker: alice.publicKey,
@@ -94,41 +95,48 @@ describe("token-exchange", () => {
     // Check the approval for the escrow account
     const aliceAccount = await provider.connection.getTokenAccountBalance(aliceTokenAccountATK);
     expect(aliceAccount.value.uiAmount).toBe(20); // Alice's tokens are still in her account but approved for transfer
+    } catch (error) {
+      console.error("Error during make_offer:", error);
+      throw error;
+    }
   });
 
   it("Bob takes the offer", async () => {
-    console.log("start test");
-    await program.methods
-      .takeOffer()
-      .accounts({
-        taker: bob.publicKey,
-        takerBtkAccount: bobTokenAccountBTK,
-        takerBtkMint: mintBTK,
-        maker: alice.publicKey,
-        makerAtkAccount: aliceTokenAccountATK,
-        escrowAccount: escrowAccount.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .signers([bob])
-      .rpc();
+    try {
+      await program.methods
+        .takeOffer()
+        .accounts({
+          taker: bob.publicKey,
+          takerBtkAccount: bobTokenAccountBTK,
+          takerBtkMint: mintBTK,
+          maker: alice.publicKey,
+          makerAtkAccount: aliceTokenAccountATK,
+          escrowAccount: escrowAccount.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([bob])
+        .rpc();
+  
+      // Check balances after the exchange
+      const aliceBtkAccount = await provider.connection.getTokenAccountBalance(aliceTokenAccountBTK);
+      const bobAtkAccount = await provider.connection.getTokenAccountBalance(bobTokenAccountATK);
+      const aliceAtkAccount = await provider.connection.getTokenAccountBalance(aliceTokenAccountATK);
+      const bobBtkAccount = await provider.connection.getTokenAccountBalance(bobTokenAccountBTK);
 
-    console.log("bob takes offer");
+      console.log("Alice's BTK balance:", aliceBtkAccount.value.uiAmount);
+      console.log("Bob's ATK balance:", bobAtkAccount.value.uiAmount);
+      console.log("Alice's ATK balance after transfer:", aliceAtkAccount.value.uiAmount);
+      console.log("Bob's BTK balance after transfer:", bobBtkAccount.value.uiAmount);
 
-    // Check balances after the exchange
-    const aliceBtkAccount = await provider.connection.getTokenAccountBalance(aliceTokenAccountBTK);
-    const bobAtkAccount = await provider.connection.getTokenAccountBalance(bobTokenAccountATK);
-    const aliceAtkAccount = await provider.connection.getTokenAccountBalance(aliceTokenAccountATK);
-    const bobBtkAccount = await provider.connection.getTokenAccountBalance(bobTokenAccountBTK);
-
-    console.log("Alice's BTK balance:", aliceBtkAccount.value.uiAmount);
-    console.log("Bob's ATK balance:", bobAtkAccount.value.uiAmount);
-    console.log("Alice's ATK balance after transfer:", aliceAtkAccount.value.uiAmount);
-    console.log("Bob's BTK balance after transfer:", bobBtkAccount.value.uiAmount);
-
-    expect(aliceBtkAccount.value.uiAmount).toBe(100); // Alice should receive 100 BTK
-    expect(bobAtkAccount.value.uiAmount).toBe(20); // Bob should receive 20 ATK
-    expect(aliceAtkAccount.value.uiAmount).toBe(0); // Alice's ATK should be transferred
-    expect(bobBtkAccount.value.uiAmount).toBe(0); // Bob's BTK should be transferred
+      expect(aliceBtkAccount.value.uiAmount).toBe(100); // Alice should receive 100 BTK
+      expect(bobAtkAccount.value.uiAmount).toBe(20); // Bob should receive 20 ATK
+      expect(aliceAtkAccount.value.uiAmount).toBe(0); // Alice's ATK should be transferred
+      expect(bobBtkAccount.value.uiAmount).toBe(0); // Bob's BTK should be transferred
+      
+    } catch (error) {
+      console.error("Error during take_offer:", error);
+      throw error;
+    } 
   });
 });
 

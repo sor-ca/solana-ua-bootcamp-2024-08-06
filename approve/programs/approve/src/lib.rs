@@ -16,17 +16,10 @@ pub mod approve {
     use super::*;
     pub fn make_offer(
         context: Context<MakeOffer>,
-        //id: u64,
         maker_atk_amount: u64,
         taker_btk_amount: u64,
-        taker_btk_mint: Pubkey,
     ) -> Result<()> {
-        instructions::make_offer::make_offer(
-            context,
-            maker_atk_amount,
-            taker_btk_amount,
-            taker_btk_mint,
-        )
+        instructions::make_offer::make_offer(context, maker_atk_amount, taker_btk_amount)
         //instructions::make_offer::save_offer(context, id, token_b_wanted_amount)
     }
 
