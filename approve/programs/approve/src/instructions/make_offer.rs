@@ -32,7 +32,8 @@ pub struct MakeOffer<'info> {
         init,
         payer = maker,
         space = crate::constants::ANCHOR_DISCRIMINATOR + EscrowAccount::INIT_SPACE,
-        seeds = [b"escrow", maker.key().as_ref(), id.to_le_bytes().as_ref()],
+        //seeds = [b"escrow", maker.key().as_ref(), id.to_le_bytes().as_ref()],
+        seeds = [b"escrow", maker.key().as_ref()],
         bump
     )]
     pub escrow_account: Account<'info, EscrowAccount>,
@@ -53,12 +54,6 @@ pub struct EscrowAccount {
     pub btk_mint: Pubkey,
     pub bump: u8,
 }
-
-// pub struct Approve<'info> {
-//     pub to: AccountInfo<'info>,
-//     pub delegate: AccountInfo<'info>,
-//     pub authority: AccountInfo<'info>,
-// }
 
 // The make_offer function sets up an offer by storing the details in an EscrowAccount.
 // It uses the approve_checked function to allow the program to transfer the specified amount of ATK tokens from Alice's account when the offer is accepted.

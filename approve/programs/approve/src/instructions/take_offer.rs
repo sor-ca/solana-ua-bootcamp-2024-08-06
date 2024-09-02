@@ -91,7 +91,7 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
     let signer_seeds: [&[&[u8]]; 1] = [&[
         b"escrow",
         ctx.accounts.maker.to_account_info().key.as_ref(),
-        &ctx.accounts.escrow_account.id.to_le_bytes()[..],
+        //&ctx.accounts.escrow_account.id.to_le_bytes()[..],
         &[ctx.accounts.escrow_account.bump],
     ]];
 
@@ -121,9 +121,9 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
     msg!("Offer taken successfully.");
 
     //Close the escrow account
-    let escrow_account = ctx.accounts.escrow_account.to_account_info();
-    **ctx.accounts.maker.lamports.borrow_mut() += **escrow_account.lamports.borrow();
-    **escrow_account.lamports.borrow_mut() = 0;
-    *escrow_account.try_borrow_mut_data()? = &mut [];
+    // let escrow_account = ctx.accounts.escrow_account.to_account_info();
+    // **ctx.accounts.maker.lamports.borrow_mut() += **escrow_account.lamports.borrow();
+    // **escrow_account.lamports.borrow_mut() = 0;
+    // *escrow_account.try_borrow_mut_data()? = &mut [];
     Ok(())
 }
