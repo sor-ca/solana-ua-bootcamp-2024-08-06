@@ -103,12 +103,15 @@ describe("token-exchange", () => {
   it("Alice makes an offer to exchange ATK for BTK", async () => {
     try {
       await program.methods
-      .makeOffer(new anchor.BN(amountATK), new anchor.BN(amountBTK), new anchor.BN(offerId))
+      .makeOffer(
+        new anchor.BN(amountATK), 
+        new anchor.BN(amountBTK) 
+        //offerId
+      )
       .accounts({
         maker: alice.publicKey,
         atkMint: mintATK,
         btkMint: mintBTK,
-        //escrowAccount: escrowAccount.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .signers([alice])
@@ -134,8 +137,6 @@ describe("token-exchange", () => {
       expect(offerAccount.btkMint).toEqual(mintBTK);
       // expect(offerAccount.makerAtkAmount).toEqual(amountATK);
       // expect(offerAccount.takerBtkAmount).toEqual(amountBTK);
-      console.log(offerAccount.makerAtkAmount);
-      console.log(offerAccount.takerBtkAmount);
 
     } catch (error) {
       console.error("Error during make_offer:", error);

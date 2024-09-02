@@ -9,7 +9,7 @@ use anchor_spl::token_2022::{approve, Approve};
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 #[derive(Accounts)]
-#[instruction(id: u64)]
+//#[instruction(id: u64)]
 pub struct MakeOffer<'info> {
     #[account(mut)]
     pub maker: Signer<'info>,
@@ -19,7 +19,6 @@ pub struct MakeOffer<'info> {
     #[account(mint::token_program = token_program)]
     pub btk_mint: InterfaceAccount<'info, Mint>,
 
-    //#[account(mut)]
     #[account(
         mut,
         associated_token::mint = atk_mint,
@@ -46,7 +45,7 @@ pub struct MakeOffer<'info> {
 #[account]
 #[derive(InitSpace)]
 pub struct EscrowAccount {
-    pub id: u64,
+    //pub id: u64,
     pub maker: Pubkey,
     pub maker_atk_amount: u64,
     pub atk_mint: Pubkey,
@@ -61,12 +60,12 @@ pub fn make_offer(
     ctx: Context<MakeOffer>,
     maker_atk_amount: u64,
     taker_btk_amount: u64,
-    id: u64,
+    //id: u64,
 ) -> Result<()> {
     msg!("Starting to make offer...");
 
     ctx.accounts.escrow_account.set_inner(EscrowAccount {
-        id,
+        //id,
         maker: ctx.accounts.maker.key(),
         atk_mint: ctx.accounts.atk_mint.key(),
         btk_mint: ctx.accounts.btk_mint.key(),
@@ -83,10 +82,7 @@ pub fn make_offer(
     let cpi_program = ctx.accounts.token_program.to_account_info();
     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
-    if let Err(e) =
-        //token::approve_checked(cpi_ctx, maker_atk_amount, ctx.accounts.atk_mint.decimals)
-        approve(cpi_ctx, maker_atk_amount)
-    {
+    if let Err(e) = approve(cpi_ctx, maker_atk_amount) {
         msg!("Error approving tokens: {:?}", e);
         return Err(e);
     }

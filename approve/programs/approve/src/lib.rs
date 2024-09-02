@@ -18,10 +18,10 @@ pub mod approve {
         context: Context<MakeOffer>,
         maker_atk_amount: u64,
         taker_btk_amount: u64,
-        id: u64,
+        //id: u64,
     ) -> Result<()> {
-        instructions::make_offer::make_offer(context, maker_atk_amount, taker_btk_amount, id)
-        //instructions::make_offer::save_offer(context, id, token_b_wanted_amount)
+        //instructions::make_offer::make_offer(context, maker_atk_amount, taker_btk_amount, id)
+        instructions::make_offer::make_offer(context, maker_atk_amount, taker_btk_amount)
     }
 
     pub fn take_offer(context: Context<TakeOffer>) -> Result<()> {
