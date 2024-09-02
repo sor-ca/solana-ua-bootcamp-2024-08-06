@@ -53,7 +53,16 @@ pub struct TakeOffer<'info> {
     )]
     pub maker_btk_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    #[account(mut)]
+    //#[account(mut)]
+    #[account(
+        mut,
+        close = maker,
+        has_one = maker,
+        has_one = atk_mint,
+        has_one = btk_mint,
+        // seeds = [b"offer", maker.key().as_ref(), offer.id.to_le_bytes().as_ref()],
+        // bump = offer.bump
+    )]
     pub escrow_account: Account<'info, EscrowAccount>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
@@ -79,6 +88,13 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
         return Err(e);
     }
 
+    let signer_seeds: [&[&[u8]]; 1] = [&[
+        b"escrow",
+        ctx.accounts.maker.to_account_info().key.as_ref(),
+        &ctx.accounts.escrow_account.id.to_le_bytes()[..],
+        &[ctx.accounts.escrow_account.bump],
+    ]];
+
     // Transfer ATK tokens from the maker to the taker
     let cpi_accounts = TransferChecked {
         from: ctx.accounts.maker_atk_account.to_account_info(),
@@ -86,9 +102,12 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
         authority: ctx.accounts.escrow_account.to_account_info(),
         mint: ctx.accounts.atk_mint.to_account_info(),
     };
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-    //token::transfer(cpi_ctx, ctx.accounts.escrow_account.maker_atk_amount)?;
+
+    let cpi_ctx = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        cpi_accounts,
+        &signer_seeds,
+    );
 
     if let Err(e) = transfer_checked(
         cpi_ctx,
@@ -101,7 +120,7 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
 
     msg!("Offer taken successfully.");
 
-    // Close the escrow account
+    //Close the escrow account
     let escrow_account = ctx.accounts.escrow_account.to_account_info();
     **ctx.accounts.maker.lamports.borrow_mut() += **escrow_account.lamports.borrow();
     **escrow_account.lamports.borrow_mut() = 0;

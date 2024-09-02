@@ -9,6 +9,7 @@ use anchor_spl::token_2022::{approve, Approve};
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 #[derive(Accounts)]
+#[instruction(id: u64)]
 pub struct MakeOffer<'info> {
     #[account(mut)]
     pub maker: Signer<'info>,
@@ -26,24 +27,31 @@ pub struct MakeOffer<'info> {
         associated_token::token_program = token_program
     )]
     pub maker_atk_account: InterfaceAccount<'info, TokenAccount>,
-    #[account(init, payer = maker, space = crate::constants::ANCHOR_DISCRIMINATOR + EscrowAccount::INIT_SPACE)]
+
+    #[account(
+        init,
+        payer = maker,
+        space = crate::constants::ANCHOR_DISCRIMINATOR + EscrowAccount::INIT_SPACE,
+        seeds = [b"escrow", maker.key().as_ref(), id.to_le_bytes().as_ref()],
+        bump
+    )]
     pub escrow_account: Account<'info, EscrowAccount>,
 
-    //pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
-    //pub rent: Sysvar<'info, Rent>,
 }
 
 #[account]
 #[derive(InitSpace)]
 pub struct EscrowAccount {
+    pub id: u64,
     pub maker: Pubkey,
     pub maker_atk_amount: u64,
     pub atk_mint: Pubkey,
     pub taker_btk_amount: u64,
     pub btk_mint: Pubkey,
+    pub bump: u8,
 }
 
 // pub struct Approve<'info> {
@@ -58,28 +66,20 @@ pub fn make_offer(
     ctx: Context<MakeOffer>,
     maker_atk_amount: u64,
     taker_btk_amount: u64,
+    id: u64,
 ) -> Result<()> {
     msg!("Starting to make offer...");
+
     ctx.accounts.escrow_account.set_inner(EscrowAccount {
+        id,
         maker: ctx.accounts.maker.key(),
         atk_mint: ctx.accounts.atk_mint.key(),
         btk_mint: ctx.accounts.btk_mint.key(),
         maker_atk_amount,
         taker_btk_amount,
+        bump: ctx.bumps.escrow_account,
     });
 
-    // Approve the program to spend the maker's ATK tokens
-    // The ApproveChecked CPI (Cross-Program Invocation) requires the following fields:
-    // to: The token account from which tokens will be approved for transfer.
-    // delegate: The account that will be allowed to transfer tokens on behalf of the authority.
-    // authority: The account that owns the token account and grants the approval.
-    // mint: The mint of the token, which is required to verify the token's decimals.
-    // let cpi_accounts = ApproveChecked {
-    //     to: ctx.accounts.maker_atk_account.to_account_info(),
-    //     delegate: ctx.accounts.escrow_account.to_account_info(),
-    //     authority: ctx.accounts.maker.to_account_info(),
-    //     mint: ctx.accounts.atk_mint.to_account_info(),
-    // };
     let cpi_accounts = Approve {
         to: ctx.accounts.maker_atk_account.to_account_info(),
         delegate: ctx.accounts.escrow_account.to_account_info(),
