@@ -29,12 +29,19 @@ export const getRandomBigNumber = (size: number = 8) => {
   return new BN(randomBytes(size));
 };
 
-function sleep(millis: number) {
-  var t = (new Date()).getTime();
-  var i = 0;
-  while (((new Date()).getTime() - t) < millis) {
-      i++;
-  }
+// function sleep(millis: number) {
+//   var t = (new Date()).getTime();
+//   var i = 0;
+//   while (((new Date()).getTime() - t) < millis) {
+//       i++;
+//   }
+// }
+// function sleep(ms: number) {
+//   return new Promise( resolve => setTimeout(resolve, ms) );
+// }
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 describe("token-exchange", () => {
