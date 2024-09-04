@@ -1,0 +1,48 @@
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/mnt/f/rust/solana-ua-bootcamp-2024-08-06/approve/Anchor.toml"
+
+yarn run v1.22.22
+$ /mnt/f/rust/solana-ua-bootcamp-2024-08-06/approve/node_modules/.bin/jest --preset ts-jest
+  console.log
+    Alice's initial balance: 0
+
+      at tests/approve.test.ts:81:13
+
+  console.log
+    Bob's initial balance: 0
+
+      at tests/approve.test.ts:82:13
+
+  console.log
+    Alice's initial ATK balance: 20
+
+      at tests/approve.test.ts:104:13
+
+  console.log
+    Bob's initial BTK balance: 100
+
+      at tests/approve.test.ts:105:13
+
+  console.log
+    Alice's BTK balance: 100
+
+      at tests/approve.test.ts:182:15
+
+  console.log
+    Bob's ATK balance: 20
+
+      at tests/approve.test.ts:183:15
+
+  console.log
+    Alice's ATK balance after transfer: 0
+
+      at tests/approve.test.ts:184:15
+
+  console.log
+    Bob's BTK balance after transfer: 0
+
+      at tests/approve.test.ts:185:15
+
+Done in 72.31s.

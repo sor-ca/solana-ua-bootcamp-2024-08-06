@@ -76,7 +76,7 @@ describe("token-exchange", () => {
     const AliceInitBalance = await provider.connection.getBalance(alice.publicKey);
     const BobInitBalance = await provider.connection.getBalance(bob.publicKey);
 
-    sleep(500)
+    await sleep(1000)
 
     console.log("Alice's initial balance:", AliceInitBalance);
     console.log("Bob's initial balance:", BobInitBalance);
@@ -104,7 +104,7 @@ describe("token-exchange", () => {
     console.log("Alice's initial ATK balance:", aliceInitialATK.value.uiAmount);
     console.log("Bob's initial BTK balance:", bobInitialBTK.value.uiAmount);
 
-    sleep(500)
+    await sleep(1000)
   });
 
   it("Alice makes an offer to exchange ATK for BTK", async () => {
